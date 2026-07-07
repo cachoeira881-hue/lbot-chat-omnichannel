@@ -7,13 +7,17 @@
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #efeae2; display: flex; flex-direction: column; height: 100vh; height: -webkit-fill-available; }
         
-        /* Área de Mensagens */
+        /* Força a tela a ter exatamente a altura visível do dispositivo e impede o scroll na página inteira */
+        html, body { height: 100%; width: 100%; overflow: hidden; }
+        
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #efeae2; display: flex; flex-direction: column; }
+        
+        /* O conteúdo do chat vai ocupar todo o espaço restante e criar sua própria barra de rolagem interna */
         #chat { flex: 1; overflow-y: auto; padding: 20px 15px; display: flex; flex-direction: column; gap: 8px; }
         
-        /* Balões de Mensagem genéricos */
-        .msg { padding: 8px 12px; border-radius: 8px; font-size: 15px; line-height: 1.4; max-width: 75%; word-break: break-word; box-shadow: 0 1px 1px rgba(0,0,0,0.12); position: relative; }
+        /* Balões de Mensagem */
+        .msg { padding: 8px 12px; border-radius: 8px; font-size: 15px; line-height: 1.4; max-width: 75%; word-break: break-word; box-shadow: 0 1px 1px rgba(0,0,0,0.12); }
         
         /* Mensagem enviada por MIM (Direita - Verde) */
         .msg.meu { align-self: flex-end; background: #d9fdd3; color: #111b21; border-top-right-radius: 0; }
@@ -23,12 +27,12 @@
         
         audio { max-width: 100%; width: 240px; display: block; margin-top: 2px; }
 
-        /* Barra Inferior de Digitação */
-        #input-area { display: flex; padding: 10px; background: #f0f2f5; align-items: center; gap: 10px; }
+        /* Barra Inferior de Digitação - Totalmente Fixada no Rodapé */
+        #input-area { display: flex; padding: 10px; background: #f0f2f5; align-items: center; gap: 10px; box-shadow: 0 -2px 5px rgba(0,0,0,0.05); width: 100%; flex-shrink: 0; }
         
         #texto { flex: 1; padding: 10px 16px; border-radius: 20px; border: none; outline: none; font-size: 15px; background: white; color: #3b3b3b; }
         
-        /* Botões Redondos de Ação */
+        /* Botões Redondos */
         .btn-action { border: none; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 18px; transition: transform 0.1s; flex-shrink: 0; }
         .btn-action:active { transform: scale(0.92); }
         
@@ -38,12 +42,12 @@
 
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
 
-        /* Responsividade para Telas Grandes */
+        /* Limitação de largura em telas grandes para manter o visual limpo no PC */
         @media (min-width: 768px) {
-            #chat { padding: 20px 10%; }
+            #chat { padding: 20px 20%; }
             .msg { max-width: 60%; font-size: 16px; }
             audio { width: 280px; }
-            #input-area { padding: 12px 10%; }
+            #input-area { padding: 12px 20%; }
         }
     </style>
 </head>
@@ -76,7 +80,6 @@
             const div = document.createElement('div');
             div.classList.add('msg');
 
-            // Verifica se quem enviou foi esta própria aba/dispositivo
             if (dados.idUsuario === socket.id) {
                 div.classList.add('meu');
             } else {
@@ -100,7 +103,6 @@
             e.preventDefault();
             const texto = textoInput.value.trim();
             if(texto !== "") {
-                // Enviamos o texto JUNTO com o ID único do socket para sabermos quem mandou
                 socket.emit('envia_mensagem', { tipo: 'texto', conteudo: texto, idUsuario: socket.id });
                 textoInput.value = "";
                 textoInput.focus();
@@ -129,7 +131,6 @@
                         reader.readAsDataURL(audioBlob); 
                         reader.onloadend = () => {
                             const base64Audio = reader.result;
-                            // Enviamos o áudio JUNTO com o ID do socket
                             socket.emit('envia_mensagem', { tipo: 'audio', conteudo: base64Audio, idUsuario: socket.id });
                         };
                         stream.getTracks().forEach(track => track.stop());
